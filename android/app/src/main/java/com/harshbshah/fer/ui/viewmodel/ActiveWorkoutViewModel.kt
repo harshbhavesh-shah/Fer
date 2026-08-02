@@ -22,10 +22,24 @@ class ActiveWorkoutViewModel(
     private val repository: FirestoreRepository,
     routineName: String,
     initialExercises: List<LoggedExercise>,
-    private val defaultRestSeconds: Int
+    private val defaultRestSeconds: Int,
+    /** Snapshot of prior workouts at session start, for the "Previous" set reference column. */
+    private val pastWorkouts: List<WorkoutSession> = emptyList()
 ) : ViewModel() {
 
     private val restSecondsByExerciseId = mutableMapOf<String, Int>()
+
+    /** Sets from the most recent past workout that logged this exercise, same order —
+     *  set N's "Previous" is that workout's set N, matching Hevy's reference column. */
+    fun previousSets(exerciseId: String): List<SetEntry> {
+        return pastWorkouts
+            .filter { workout -> workout.exercises.any { it.exerciseId == exerciseId } }
+            .maxByOrNull { it.startedAt }
+            ?.exercises
+            ?.firstOrNull { it.exerciseId == exerciseId }
+            ?.sets
+            .orEmpty()
+    }
 
     private val _routineName = MutableStateFlow(routineName)
     val routineName: StateFlow<String> = _routineName

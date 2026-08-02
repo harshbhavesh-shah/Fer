@@ -27,7 +27,7 @@ enum Formatters {
     /// Converts a canonical lb value to the display unit and formats it.
     static func weight(_ lbValue: Double, unit: UserProfile.WeightUnit) -> String {
         weight(displayValue(lbValue, unit: unit))
-    };Z
+    }
 
     /// Converts a canonical lb value into the given display unit (no formatting).
     static func displayValue(_ lbValue: Double, unit: UserProfile.WeightUnit) -> Double {

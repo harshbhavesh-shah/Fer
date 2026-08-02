@@ -52,4 +52,8 @@ object Formatters {
 
     fun monthYear(date: Date): String =
         java.text.SimpleDateFormat("MMMM yyyy").format(date)
+
+    /** Compact absolute date for list rows, e.g. "Aug 1" — used in History instead of relative "1d ago". */
+    fun shortDate(date: Date): String =
+        java.text.SimpleDateFormat("MMM d", java.util.Locale.getDefault()).format(date)
 }

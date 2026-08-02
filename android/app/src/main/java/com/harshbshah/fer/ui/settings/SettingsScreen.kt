@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -36,8 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.harshbshah.fer.data.model.UserProfile.WeightUnit
@@ -46,75 +50,91 @@ import com.harshbshah.fer.ui.theme.ferGradient
 import com.harshbshah.fer.ui.viewmodel.SettingsViewModel
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(viewModel: SettingsViewModel, bottomContentPadding: Dp = 0.dp) {
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val weightUnit by viewModel.weightUnit.collectAsStateWithLifecycle()
     val defaultRestSeconds by viewModel.defaultRestSeconds.collectAsStateWithLifecycle()
     var showSignOutConfirm by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+            .padding(bottom = bottomContentPadding),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
         ProfileHeader(name = currentUser?.displayName, email = currentUser?.email)
 
-        Column {
-            Text("Preferences", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.size(8.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                "Preferences",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+            )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Scale, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.size(8.dp))
-                Text("Weight Unit", modifier = Modifier.weight(1f))
-                SingleChoiceSegmentedButtonRow {
-                    WeightUnit.entries.forEachIndexed { index, unit ->
-                        SegmentedButton(
-                            selected = weightUnit == unit,
-                            onClick = { viewModel.setWeightUnit(unit) },
-                            shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(index, WeightUnit.entries.size)
-                        ) { Text(unit.label.uppercase()) }
+            Column(modifier = Modifier.cardStyle(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Scale, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.size(12.dp))
+                    Text("Weight Unit", modifier = Modifier.weight(1f))
+                    SingleChoiceSegmentedButtonRow {
+                        WeightUnit.entries.forEachIndexed { index, unit ->
+                            SegmentedButton(
+                                selected = weightUnit == unit,
+                                onClick = { viewModel.setWeightUnit(unit) },
+                                shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(index, WeightUnit.entries.size)
+                            ) { Text(unit.label.uppercase()) }
+                        }
                     }
                 }
-            }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider()
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.size(8.dp))
-                Text("Default Rest Time", modifier = Modifier.weight(1f))
-                Text("${defaultRestSeconds}s", fontWeight = FontWeight.SemiBold)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                listOf(30, 60, 90, 120, 180).forEach { seconds ->
-                    val selected = defaultRestSeconds == seconds
-                    Text(
-                        "${seconds}s",
-                        modifier = Modifier
-                            .clickable { viewModel.setDefaultRestSeconds(seconds) }
-                            .background(
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                androidx.compose.foundation.shape.RoundedCornerShape(50)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Timer, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.size(12.dp))
+                        Text("Default Rest Time", modifier = Modifier.weight(1f))
+                        Text("${defaultRestSeconds}s", fontWeight = FontWeight.SemiBold)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(30, 60, 90, 120, 180).forEach { seconds ->
+                            val selected = defaultRestSeconds == seconds
+                            Text(
+                                "${seconds}s",
+                                modifier = Modifier
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                                    .clickable { viewModel.setDefaultRestSeconds(seconds) }
+                                    .background(
+                                        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                        androidx.compose.foundation.shape.RoundedCornerShape(50)
+                                    )
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                                color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        }
+                    }
                 }
-            }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider()
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.size(8.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Now Playing Access")
-                    Text(
-                        if (viewModel.hasNowPlayingAccess()) "Enabled" else "Grant access to show now-playing during workouts",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (!viewModel.hasNowPlayingAccess()) {
-                    TextButton(onClick = { openNotificationAccessSettings(context) }) { Text("Grant") }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.MusicNote, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.size(12.dp))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Now Playing Access")
+                        Text(
+                            if (viewModel.hasNowPlayingAccess()) "Enabled" else "Grant access to show now-playing during workouts",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (!viewModel.hasNowPlayingAccess()) {
+                        TextButton(onClick = { openNotificationAccessSettings(context) }) { Text("Grant") }
+                    }
                 }
             }
         }

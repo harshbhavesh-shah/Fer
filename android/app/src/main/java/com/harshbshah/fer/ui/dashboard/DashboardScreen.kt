@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,9 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.harshbshah.fer.data.model.RoutineTemplate
@@ -47,6 +49,7 @@ fun DashboardScreen(
     routinesVM: RoutinesViewModel,
     historyVM: HistoryViewModel,
     weightUnit: WeightUnit,
+    bottomContentPadding: Dp = 0.dp,
     onStartBlank: () -> Unit,
     onStartRoutine: (RoutineTemplate) -> Unit,
     onOpenWorkout: (WorkoutSession) -> Unit
@@ -55,9 +58,22 @@ fun DashboardScreen(
     val workouts by historyVM.workouts.collectAsStateWithLifecycle()
 
     LazyColumn(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp + bottomContentPadding),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        item {
+            // Mirrors iOS's inline `.navigationTitle("Fer")` nav-bar title —
+            // titleLarge/Bold, not titleMedium/SemiBold, so it doesn't read as
+            // an afterthought next to the much bigger "Good morning" below it.
+            Text(
+                "Fer",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
         item { DashboardHeader() }
 
         item {
@@ -134,22 +150,14 @@ private fun StatPill(icon: androidx.compose.ui.graphics.vector.ImageVector, valu
 private fun WeeklyTrendCard(historyVM: HistoryViewModel, weightUnit: WeightUnit) {
     val dailyVolume = historyVM.dailyVolume(7)
     val workoutDates = historyVM.workoutDates(7)
+    val weekdayFormat = remember { java.text.SimpleDateFormat("EEEEE", java.util.Locale.getDefault()) }
     Column(modifier = Modifier.cardStyle(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("This Week", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        BarChart(values = dailyVolume.map { Formatters.displayValue(it.second, weightUnit) })
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            dailyVolume.forEach { (date, _) ->
-                val active = workoutDates.contains(date)
-                Column(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(
-                            if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f),
-                            CircleShape
-                        )
-                ) {}
-            }
-        }
+        BarChart(
+            values = dailyVolume.map { Formatters.displayValue(it.second, weightUnit) },
+            xLabels = dailyVolume.map { (date, _) -> weekdayFormat.format(date) },
+            activeIndicators = dailyVolume.map { (date, _) -> workoutDates.contains(date) }
+        )
     }
 }
 

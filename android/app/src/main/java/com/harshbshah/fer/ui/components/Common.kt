@@ -1,6 +1,7 @@
 package com.harshbshah.fer.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,10 +21,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.harshbshah.fer.ui.theme.CardShape
 
+// Matches iOS's CardBackground modifier (Theme.swift): .regularMaterial fill
+// plus a 1px Color.primary.opacity(0.06) stroke — the border is what gives
+// cards a defined edge against a same-tone background instead of just
+// floating there.
 @Composable
 fun Modifier.cardStyle(padding: androidx.compose.ui.unit.Dp = 16.dp): Modifier = this
     .fillMaxWidth()
     .background(MaterialTheme.colorScheme.surface, CardShape)
+    .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f), CardShape)
     .padding(padding)
 
 @Composable

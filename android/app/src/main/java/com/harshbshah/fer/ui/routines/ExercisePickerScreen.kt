@@ -1,4 +1,4 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi::class)
 
 package com.harshbshah.fer.ui.routines
 
@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,15 +34,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.harshbshah.fer.data.ExerciseLibrary
 import com.harshbshah.fer.data.model.Exercise
 import com.harshbshah.fer.data.model.MuscleGroup
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 @Composable
 fun ExercisePickerScreen(onPick: (Exercise) -> Unit, onClose: () -> Unit) {
     var search by remember { mutableStateOf("") }
     var selectedMuscle by remember { mutableStateOf<MuscleGroup?>(null) }
+    val hazeState = remember { HazeState() }
 
     val filtered = remember(search, selectedMuscle) {
         ExerciseLibrary.all.filter { exercise ->
@@ -52,9 +59,20 @@ fun ExercisePickerScreen(onPick: (Exercise) -> Unit, onClose: () -> Unit) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Add Exercise") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Exercise") },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                modifier = Modifier.hazeEffect(state = hazeState, style = HazeMaterials.thin())
+            )
+        }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(hazeState)
+                .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding())
+        ) {
             OutlinedTextField(
                 value = search,
                 onValueChange = { search = it },

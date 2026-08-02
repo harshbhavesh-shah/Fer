@@ -51,6 +51,18 @@ final class HistoryViewModel: ObservableObject {
         FirestoreService.shared.history(forExerciseId: id, workouts: workouts)
     }
 
+    /// The full set-by-set log (not just the best set) from the most recent
+    /// workout that included this exercise — used for the "previous" column
+    /// while actively logging a new workout.
+    func previousSets(forExerciseId id: String) -> [SetEntry]? {
+        workouts
+            .sorted { $0.startedAt > $1.startedAt }
+            .compactMap { workout in workout.exercises.first { $0.exerciseId == id } }
+            .first?
+            .sets
+            .filter { $0.isCompleted && !$0.isWarmup }
+    }
+
     /// Start-of-day dates (in the last `days` days, including today) that had at least one workout.
     func workoutDates(last days: Int) -> Set<Date> {
         let calendar = Calendar.current

@@ -8,6 +8,9 @@ import SwiftUI
 struct ActiveWorkoutView: View {
     @ObservedObject var viewModel: WorkoutSessionViewModel
     @Binding var activeWorkout: WorkoutSessionViewModel?
+    @ObservedObject var historyVM: HistoryViewModel
+    let onMinimize: () -> Void
+
     @State private var showingPicker = false
     @State private var showingDiscardConfirm = false
     @State private var showingSummary = false
@@ -87,6 +90,7 @@ struct ActiveWorkoutView: View {
                         ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { index, exercise in
                             ExerciseLogCard(
                                 exercise: exercise,
+                                historyVM: historyVM,
                                 onAddSet: { viewModel.addSet(to: index) },
                                 onToggleSet: { setIndex in
                                     viewModel.toggleComplete(exerciseIndex: index, setIndex: setIndex)
@@ -127,6 +131,9 @@ struct ActiveWorkoutView: View {
                     .animation(.spring(response: 0.4, dampingFraction: 0.75), value: viewModel.exercises)
                 }
                 .scrollDismissesKeyboard(.interactively)
+                .safeAreaInset(edge: .top) {
+                    WorkoutStatsHeader(viewModel: viewModel)
+                }
 
                 if viewModel.isResting {
                     RestTimerBar(viewModel: viewModel)
@@ -137,12 +144,15 @@ struct ActiveWorkoutView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        onMinimize()
+                    } label: {
+                        Image(systemName: "chevron.down")
+                    }
+                }
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Discard") { showingDiscardConfirm = true }
                         .foregroundStyle(.red)
-                }
-                ToolbarItem(placement: .principal) {
-                    Text(Formatters.duration(viewModel.elapsed))
-                        .font(.headline.monospacedDigit())
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Finish") {
@@ -185,6 +195,37 @@ struct ActiveWorkoutView: View {
     }
 }
 
+/// Sticky stats row pinned above the scrolling exercise list — Hevy-style
+/// at-a-glance volume/duration/sets, always visible regardless of scroll
+/// position (unlike the old single duration readout in the nav bar).
+private struct WorkoutStatsHeader: View {
+    @ObservedObject var viewModel: WorkoutSessionViewModel
+    @ObservedObject private var settings = SettingsStore.shared
+
+    var body: some View {
+        HStack(spacing: 0) {
+            stat(value: Formatters.weight(viewModel.totalVolume, unit: settings.weightUnit), label: settings.weightUnit.label.uppercased())
+            Divider().frame(height: 28)
+            stat(value: Formatters.duration(viewModel.elapsed), label: "DURATION")
+            Divider().frame(height: 28)
+            stat(value: "\(viewModel.totalSetsCompleted)", label: "SETS")
+        }
+        .padding(.vertical, 10)
+        .background(.bar)
+    }
+
+    private func stat(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .statNumberStyle()
+            Text(label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 /// Visible tab docked to the trailing edge, hinting that Now Playing can be
 /// pulled open — tapping it opens immediately (no gesture finesse needed),
 /// and it also sits inside the drag zone for the swipe-to-open gesture.
@@ -215,6 +256,7 @@ private struct NowPlayingHandle: View {
 
 private struct ExerciseLogCard: View {
     let exercise: LoggedExercise
+    @ObservedObject var historyVM: HistoryViewModel
     let onAddSet: () -> Void
     let onToggleSet: (Int) -> Void
     let onRemoveSet: (Int) -> Void
@@ -235,7 +277,8 @@ private struct ExerciseLogCard: View {
             }
 
             HStack {
-                Text("SET").frame(width: 36, alignment: .leading)
+                Text("SET").frame(width: 30, alignment: .leading)
+                Text("PREV").frame(width: 64, alignment: .leading)
                 Text("WEIGHT (\(SettingsStore.shared.weightUnit.label.uppercased()))").frame(maxWidth: .infinity, alignment: .leading)
                 Text("REPS").frame(maxWidth: .infinity, alignment: .leading)
                 Text("").frame(width: 36)
@@ -248,6 +291,7 @@ private struct ExerciseLogCard: View {
                     SetRow(
                         index: index + 1,
                         set: set,
+                        previousSet: previousSet(at: index),
                         onToggle: { onToggleSet(index) },
                         onWeightChange: { onUpdateWeight(index, $0) },
                         onRepsChange: { onUpdateReps(index, $0) }
@@ -263,6 +307,15 @@ private struct ExerciseLogCard: View {
             .padding(.top, 4)
         }
         .cardStyle()
+    }
+
+    /// The matching set (by index) from the most recent time this exercise
+    /// was logged, so you can see what to beat without leaving the screen.
+    private func previousSet(at index: Int) -> SetEntry? {
+        guard let lastSessionSets = historyVM.previousSets(forExerciseId: exercise.exerciseId), !lastSessionSets.isEmpty else {
+            return nil
+        }
+        return lastSessionSets.indices.contains(index) ? lastSessionSets[index] : lastSessionSets.last
     }
 }
 
@@ -325,12 +378,14 @@ private struct SwipeToDeleteRow<Content: View>: View {
 private struct SetRow: View {
     let index: Int
     let set: SetEntry
+    let previousSet: SetEntry?
     let onToggle: () -> Void
     let onWeightChange: (Double) -> Void
     let onRepsChange: (Int) -> Void
 
     @State private var weightText: String = ""
     @State private var repsText: String = ""
+    @State private var justCompleted = false
     @ObservedObject private var settings = SettingsStore.shared
     @FocusState private var focusedField: Field?
 
@@ -340,8 +395,19 @@ private struct SetRow: View {
         HStack {
             Text("\(index)")
                 .font(.subheadline.weight(.semibold))
-                .frame(width: 36, alignment: .leading)
+                .frame(width: 30, alignment: .leading)
                 .foregroundStyle(set.isWarmup ? .orange : .primary)
+
+            Group {
+                if let previousSet, previousSet.weight > 0 || previousSet.reps > 0 {
+                    Text("\(Formatters.weight(previousSet.weight, unit: settings.weightUnit))×\(previousSet.reps)")
+                } else {
+                    Text("—")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.tertiary)
+            .frame(width: 64, alignment: .leading)
 
             TextField("0", text: $weightText)
                 .keyboardType(.decimalPad)
@@ -361,12 +427,14 @@ private struct SetRow: View {
                 }
 
             Button(action: {
+                if !set.isCompleted { justCompleted.toggle() }
                 onToggle()
             }) {
                 Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundStyle(set.isCompleted ? .green : .secondary)
-                    .scaleEffect(set.isCompleted ? 1.1 : 1.0)
+                    .scaleEffect(set.isCompleted ? 1.15 : 1.0)
+                    .symbolEffect(.bounce, value: justCompleted)
             }
             .frame(width: 36)
             .animation(.spring(response: 0.3, dampingFraction: 0.5), value: set.isCompleted)

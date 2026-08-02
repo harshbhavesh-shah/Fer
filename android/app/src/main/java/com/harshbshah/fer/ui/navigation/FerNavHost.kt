@@ -1,33 +1,56 @@
+@file:OptIn(dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi::class)
+
 package com.harshbshah.fer.ui.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.harshbshah.fer.AppContainer
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.HazeMaterials
 import com.harshbshah.fer.data.ExerciseLibrary
 import com.harshbshah.fer.data.model.Exercise
 import com.harshbshah.fer.data.model.RoutineTemplate
@@ -76,6 +99,15 @@ private val tabs = listOf(
     Triple(Routes.SETTINGS, "Settings", Icons.Filled.Settings)
 )
 
+private val routesWithOwnTopBar = setOf(Routes.ACTIVE_WORKOUT, Routes.ROUTINE_EDITOR, Routes.EXERCISE_PICKER)
+
+/** Bottom nav bar is a floating glass surface over edge-to-edge content, not a
+ *  layout-reserving one — tab screens add this as bottom content padding so
+ *  their last item scrolls clear of it instead of hiding underneath. Generous
+ *  on purpose: the pill's own margin + shadow + system nav-bar inset add up
+ *  to more than the pill's own visual height. */
+val BottomNavHeight = 130.dp
+
 @Composable
 fun FerApp(container: AppContainer) {
     val factory = remember { ViewModelFactory(container) }
@@ -108,39 +140,41 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = tabs.any { it.first == currentRoute }
+    val hasOwnScaffold = currentRoute in routesWithOwnTopBar
+    val navHazeState = remember { HazeState() }
 
-    Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                NavigationBar {
-                    tabs.forEach { (route, label, icon) ->
-                        NavigationBarItem(
-                            selected = currentRoute == route,
-                            onClick = {
-                                navController.navigate(route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label) }
-                        )
-                    }
-                }
-            }
-        }
-    ) { padding ->
+    // Routes with their own Scaffold+TopAppBar (Active Workout, Routine Editor,
+    // Exercise Picker) manage all their own insets — applying any here would
+    // double up with theirs (that double-inset was the "blank gap" bug on
+    // Active Workout). Tab routes get top-only inset + a haze source so the
+    // floating glass nav bar below has something to blur; everything else
+    // (Exercise/Workout detail, which have no TopAppBar and aren't behind the
+    // nav bar) gets full inset clearance like a normal screen.
+    val navHostModifier = when {
+        hasOwnScaffold -> Modifier.fillMaxSize()
+        showBottomBar -> Modifier.fillMaxSize().statusBarsPadding().hazeSource(navHazeState)
+        else -> Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = Routes.DASHBOARD,
-            modifier = Modifier.padding(padding)
+            modifier = navHostModifier,
+            // Navigation-Compose's own default transition reads as sluggish
+            // and washed-out at this app's snappy, haptic-forward pace — a
+            // short, sharp cross-fade instead.
+            enterTransition = { fadeIn(tween(120)) },
+            exitTransition = { fadeOut(tween(120)) },
+            popEnterTransition = { fadeIn(tween(120)) },
+            popExitTransition = { fadeOut(tween(120)) }
         ) {
             composable(Routes.DASHBOARD) {
                 DashboardScreen(
                     routinesVM = routinesVM,
                     historyVM = historyVM,
                     weightUnit = weightUnit,
+                    bottomContentPadding = BottomNavHeight,
                     onStartBlank = {
                         pendingWorkoutStart = "Quick Workout" to null
                         navController.navigate(Routes.ACTIVE_WORKOUT)
@@ -156,6 +190,8 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
             composable(Routes.ROUTINES) {
                 RoutinesListScreen(
                     viewModel = routinesVM,
+                    bottomContentPadding = BottomNavHeight,
+                    onAddRoutine = { navController.navigate(Routes.routineEditor("new")) },
                     onStart = { routine ->
                         pendingWorkoutStart = routine.name to routine
                         navController.navigate(Routes.ACTIVE_WORKOUT)
@@ -168,6 +204,7 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
                 HistoryScreen(
                     viewModel = historyVM,
                     weightUnit = weightUnit,
+                    bottomContentPadding = BottomNavHeight,
                     onOpenWorkout = { workout -> navController.navigate(Routes.workoutDetail(workout.id ?: "")) }
                 )
             }
@@ -175,12 +212,13 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
             composable(Routes.EXERCISES) {
                 ExerciseLibraryScreen(
                     historyVM = historyVM,
+                    bottomContentPadding = BottomNavHeight,
                     onOpenExercise = { exercise -> navController.navigate(Routes.exerciseDetail(exercise.id)) }
                 )
             }
 
             composable(Routes.SETTINGS) {
-                SettingsScreen(settingsVM)
+                SettingsScreen(settingsVM, bottomContentPadding = BottomNavHeight)
             }
 
             composable(Routes.ROUTINE_EDITOR) { entry ->
@@ -244,7 +282,8 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
                                 container.firestoreRepository,
                                 routineName,
                                 exercises,
-                                defaultRestSeconds
+                                defaultRestSeconds,
+                                pastWorkouts = historyVM.workouts.value
                             )
                             start?.second?.let { vm.setRestSecondsFor(it) }
                             return vm as T
@@ -268,6 +307,69 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
                         navController.popBackStack(Routes.DASHBOARD, inclusive = false)
                     }
                 )
+            }
+        }
+
+        if (showBottomBar) {
+            // A floating glass pill rather than an edge-to-edge NavigationBar
+            // — Material3's NavigationBar/NavigationBarItem assume full-width
+            // edge placement (their own internal insets/sizing fight a
+            // wrap-content pill), so this is a plain Row of custom tab
+            // buttons inside a pill-shaped Surface instead.
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .navigationBarsPadding()
+                    .padding(bottom = 8.dp)
+                    .shadow(elevation = 8.dp, shape = RoundedCornerShape(50))
+                    .hazeEffect(state = navHazeState, style = HazeMaterials.regular()),
+                shape = RoundedCornerShape(50),
+                color = Color.Transparent
+            ) {
+                // fillMaxWidth + weight(1f) per tab (not wrap-content sizing)
+                // — a wrap-content pill overflowed past the screen edge with
+                // all 5 labels showing, silently pushing Settings off-screen.
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    tabs.forEach { (route, label, icon) ->
+                        val selected = currentRoute == route
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(50))
+                                .background(
+                                    if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color.Transparent
+                                )
+                                .clickable {
+                                    navController.navigate(route) {
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                icon,
+                                contentDescription = label,
+                                tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                label,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             }
         }
     }

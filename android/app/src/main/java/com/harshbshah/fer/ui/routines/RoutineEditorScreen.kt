@@ -1,10 +1,11 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi::class)
 
 package com.harshbshah.fer.ui.routines
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +35,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.harshbshah.fer.data.model.RoutineExercise
 import com.harshbshah.fer.data.model.RoutineTemplate
 import com.harshbshah.fer.ui.theme.RoutineIcons
 import com.harshbshah.fer.ui.viewmodel.RoutinesViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 @Composable
 fun RoutineEditorScreen(
@@ -49,6 +56,7 @@ fun RoutineEditorScreen(
     onClose: () -> Unit
 ) {
     var routine by remember { mutableStateOf(initialRoutine) }
+    val hazeState = remember { HazeState() }
 
     Scaffold(
         topBar = {
@@ -63,12 +71,19 @@ fun RoutineEditorScreen(
                         },
                         enabled = routine.name.isNotBlank()
                     ) { Text("Save") }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                modifier = Modifier.hazeEffect(state = hazeState, style = HazeMaterials.thin())
             )
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+            contentPadding = PaddingValues(
+                start = 16.dp, end = 16.dp,
+                top = padding.calculateTopPadding() + 16.dp,
+                bottom = padding.calculateBottomPadding() + 16.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {

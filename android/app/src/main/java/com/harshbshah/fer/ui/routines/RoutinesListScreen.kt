@@ -1,9 +1,11 @@
 package com.harshbshah.fer.ui.routines
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ListAlt
@@ -32,7 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.harshbshah.fer.data.model.RoutineTemplate
@@ -40,12 +47,15 @@ import com.harshbshah.fer.ui.components.EmptyState
 import com.harshbshah.fer.ui.components.cardStyle
 import com.harshbshah.fer.ui.theme.RoutineIcons
 import com.harshbshah.fer.ui.viewmodel.RoutinesViewModel
+import com.harshbshah.fer.util.Haptics
 
 @Composable
 fun RoutinesListScreen(
     viewModel: RoutinesViewModel,
+    bottomContentPadding: Dp = 0.dp,
     onStart: (RoutineTemplate) -> Unit,
-    onEdit: (RoutineTemplate) -> Unit
+    onEdit: (RoutineTemplate) -> Unit,
+    onAddRoutine: () -> Unit
 ) {
     val routines by viewModel.routines.collectAsStateWithLifecycle()
 
@@ -59,7 +69,8 @@ fun RoutinesListScreen(
             )
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp + bottomContentPadding),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(routines, key = { it.id ?: it.name }) { routine ->
@@ -74,6 +85,24 @@ fun RoutinesListScreen(
                     )
                 }
             }
+        }
+
+        // Floating top-end circular button, matching the iOS screenshot's
+        // position/style (a small neutral-toned circle, not a bottom FAB).
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .shadow(4.dp, CircleShape)
+                .background(MaterialTheme.colorScheme.surface, CircleShape)
+                .clip(CircleShape)
+                .clickable {
+                    Haptics.light()
+                    onAddRoutine()
+                }
+                .padding(12.dp)
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "New routine", tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

@@ -28,8 +28,7 @@ struct DashboardView: View {
                 }
 
                 Button {
-                    Haptics.medium()
-                    activeWorkout = WorkoutSessionViewModel(blank: true)
+                    startWorkout { WorkoutSessionViewModel(blank: true) }
                 } label: {
                     Label("Start Empty Workout", systemImage: "plus.circle.fill")
                 }
@@ -40,9 +39,10 @@ struct DashboardView: View {
                         Text("Your Routines").font(.headline)
                         ForEach(routinesVM.routines.prefix(3)) { routine in
                             RoutineQuickStartRow(routine: routine) {
-                                Haptics.medium()
-                                routinesVM.markUsed(routine)
-                                activeWorkout = WorkoutSessionViewModel(from: routine)
+                                startWorkout {
+                                    routinesVM.markUsed(routine)
+                                    return WorkoutSessionViewModel(from: routine)
+                                }
                             }
                         }
                     }
@@ -90,6 +90,17 @@ struct DashboardView: View {
         case 12..<17: return "Good afternoon"
         default: return "Good evening"
         }
+    }
+
+    /// Guards against silently overwriting (and losing) an already-active
+    /// workout — e.g. if it's currently minimized rather than on screen.
+    private func startWorkout(_ make: () -> WorkoutSessionViewModel) {
+        guard activeWorkout == nil else {
+            Haptics.warning()
+            return
+        }
+        Haptics.medium()
+        activeWorkout = make()
     }
 }
 
@@ -152,7 +163,7 @@ private struct StatPill: View {
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: icon).foregroundStyle(color)
-            Text(value).font(.title3.bold())
+            Text(value).statNumberStyle()
             Text(label).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

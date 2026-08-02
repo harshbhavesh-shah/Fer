@@ -1,3 +1,5 @@
+@file:OptIn(dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi::class)
+
 package com.harshbshah.fer.ui.nowplaying
 
 import androidx.compose.foundation.Image
@@ -41,9 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.harshbshah.fer.ui.viewmodel.NowPlayingViewModel
 import com.harshbshah.fer.util.Formatters
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 @Composable
-fun NowPlayingPanel(viewModel: NowPlayingViewModel, onClose: () -> Unit) {
+fun NowPlayingPanel(viewModel: NowPlayingViewModel, hazeState: HazeState, onClose: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -51,7 +56,11 @@ fun NowPlayingPanel(viewModel: NowPlayingViewModel, onClose: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF141416))
+            .hazeEffect(state = hazeState, style = HazeMaterials.regular())
+            // A denser scrim than the nav/top-bar `thin()` glass, matching
+            // iOS's `.regular` tinted material — keeps white text legible
+            // over whatever's blurred behind (weights, exercise cards, etc).
+            .background(Color.Black.copy(alpha = 0.35f))
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp)) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {

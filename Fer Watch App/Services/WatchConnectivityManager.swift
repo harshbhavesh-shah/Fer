@@ -45,6 +45,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
             if !WatchAuthService.shared.isSignedIn {
                 WatchAuthService.shared.statusMessage = "Open Fer on your iPhone nearby to sync."
             }
+            WatchAuthService.shared.isLoading = false
             return
         }
         session.sendMessage(["requestState": true], replyHandler: { [weak self] reply in
@@ -52,6 +53,7 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         }, errorHandler: { error in
             Task { @MainActor in
                 WatchAuthService.shared.statusMessage = "Couldn't reach iPhone: \(error.localizedDescription)"
+                WatchAuthService.shared.isLoading = false
             }
         })
     }

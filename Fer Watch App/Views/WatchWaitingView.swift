@@ -22,6 +22,8 @@ struct WatchWaitingView: View {
                 .font(.footnote)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
             Button("Retry") {
                 connectivity.requestStateIfNeeded()
             }

@@ -27,9 +27,10 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
     private var timer: AnyCancellable?
     private var restTimer: AnyCancellable?
 
-    init(routineName: String, exercises: [LoggedExercise]) {
+    init(routineName: String, exercises: [LoggedExercise], startedAt: Date = Date()) {
         self.routineName = routineName
         self.exercises = exercises
+        self.startedAt = startedAt
         startClock()
         PhoneConnectivityManager.shared.attach(self)
         LiveActivityManager.shared.start(routineName: routineName, contentState: liveActivityContentState)
@@ -53,6 +54,14 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         self.init(routineName: "Quick Workout", exercises: [])
     }
 
+    /// Restores a session from a locally autosaved draft (e.g. after the app
+    /// was force-quit mid-workout) — preserves the original start time so
+    /// elapsed duration and the Live Activity stay accurate across the gap.
+    convenience init(draft: WorkoutDraft) {
+        self.init(routineName: draft.routineName, exercises: draft.exercises, startedAt: draft.startedAt)
+        self.restSecondsByExerciseId = draft.restSecondsByExerciseId
+    }
+
     private func startClock() {
         timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect().sink { [weak self] _ in
             guard let self else { return }
@@ -67,6 +76,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         Haptics.light()
         notifyChange()
         updateLiveActivity()
+        persistDraft()
     }
 
     func addSet(to exerciseIndex: Int) {
@@ -78,6 +88,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         Haptics.light()
         notifyChange()
         updateLiveActivity()
+        persistDraft()
     }
 
     func removeSet(exerciseIndex: Int, setIndex: Int) {
@@ -85,12 +96,14 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
         exercises[exerciseIndex].sets.remove(at: setIndex)
         updateLiveActivity()
+        persistDraft()
     }
 
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)
         updateLiveActivity()
+        persistDraft()
     }
 
     func toggleComplete(exerciseIndex: Int, setIndex: Int) {
@@ -107,6 +120,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         }
         notifyChange()
         updateLiveActivity()
+        persistDraft()
     }
 
     // MARK: - Rest timer
@@ -131,6 +145,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         }
         notifyChange()
         updateLiveActivity()
+        persistDraft()
     }
 
     func skipRest() {
@@ -140,6 +155,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         Haptics.light()
         notifyChange()
         updateLiveActivity()
+        persistDraft()
     }
 
     func addRestTime(_ seconds: Int) {
@@ -148,6 +164,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         Haptics.light()
         notifyChange()
         updateLiveActivity()
+        persistDraft()
     }
 
     // MARK: - Completion
@@ -178,6 +195,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         try? await FirestoreService.shared.saveWorkout(session)
         PhoneConnectivityManager.shared.detach()
         LiveActivityManager.shared.end()
+        WorkoutDraftStore.clear()
     }
 
     func discard() {
@@ -185,6 +203,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         restTimer?.cancel()
         PhoneConnectivityManager.shared.detach()
         LiveActivityManager.shared.end()
+        WorkoutDraftStore.clear()
     }
 
     // MARK: - Watch mirroring / Live Activity
@@ -222,6 +241,15 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
 
     private func updateLiveActivity() {
         LiveActivityManager.shared.update(liveActivityContentState)
+    }
+
+    private func persistDraft() {
+        WorkoutDraftStore.save(WorkoutDraft(
+            routineName: routineName,
+            exercises: exercises,
+            startedAt: startedAt,
+            restSecondsByExerciseId: restSecondsByExerciseId
+        ))
     }
 
     /// Applies an action that originated from the Watch app.

@@ -12,7 +12,9 @@ enum Theme {
     // Hardcoded rather than Color("AccentColor") — the default Xcode
     // AccentColor.colorset ships with no color assigned, which made every
     // gradient button in the app (including Sign In) render nearly invisible.
-    static let accent = Color(red: 0.31, green: 0.35, blue: 0.97)
+    // Less saturated/purple than before — a cleaner, more neutral blue in
+    // line with a data-forward (Hevy-like) look rather than a playful one.
+    static let accent = Color(red: 0.17, green: 0.42, blue: 0.93)
 
     static let background = LinearGradient(
         colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
@@ -20,11 +22,23 @@ enum Theme {
         endPoint: .bottom
     )
 
-    static let cardCorner: CGFloat = 20
+    // Tighter than before (was 20) — reads as denser/more data-forward,
+    // less "playful rounded bubble."
+    static let cardCorner: CGFloat = 14
     static let spacing: CGFloat = 16
 
     static func gradient(for color: Color) -> LinearGradient {
         LinearGradient(colors: [color, color.opacity(0.65)], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
+extension View {
+    /// Consistent bold monospaced-digit style for at-a-glance stat numbers
+    /// (Dashboard pills, workout stats header, etc.) — reads more like a
+    /// data readout than the app's default rounded/friendly type.
+    func statNumberStyle() -> some View {
+        font(.system(.title3, design: .rounded, weight: .bold))
+            .monospacedDigit()
     }
 }
 

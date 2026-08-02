@@ -31,6 +31,7 @@ struct MainTabView: View {
     @StateObject private var routinesVM = RoutinesViewModel()
     @StateObject private var historyVM = HistoryViewModel()
     @State private var activeWorkout: WorkoutSessionViewModel?
+    @State private var isWorkoutFullScreen = false
 
     var body: some View {
         TabView {
@@ -59,9 +60,75 @@ struct MainTabView: View {
             }
             .tabItem { Label("Settings", systemImage: "gearshape.fill") }
         }
-        .fullScreenCover(item: $activeWorkout) { vm in
-            ActiveWorkoutView(viewModel: vm, activeWorkout: $activeWorkout)
+        .safeAreaInset(edge: .bottom) {
+            if let vm = activeWorkout, !isWorkoutFullScreen {
+                ActiveWorkoutMiniBar(viewModel: vm) {
+                    Haptics.light()
+                    isWorkoutFullScreen = true
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: activeWorkout == nil)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isWorkoutFullScreen)
+        .fullScreenCover(isPresented: $isWorkoutFullScreen) {
+            if let vm = activeWorkout {
+                ActiveWorkoutView(
+                    viewModel: vm,
+                    activeWorkout: $activeWorkout,
+                    historyVM: historyVM,
+                    onMinimize: {
+                        Haptics.light()
+                        isWorkoutFullScreen = false
+                    }
+                )
+                .interactiveDismissDisabled()
+            }
+        }
+        .onAppear {
+            guard activeWorkout == nil, let draft = WorkoutDraftStore.load() else { return }
+            activeWorkout = WorkoutSessionViewModel(draft: draft)
+            isWorkoutFullScreen = true
+        }
+        .onChange(of: activeWorkout == nil) { _, isNil in
+            isWorkoutFullScreen = !isNil
+        }
+    }
+}
+
+private struct ActiveWorkoutMiniBar: View {
+    @ObservedObject var viewModel: WorkoutSessionViewModel
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(Theme.gradient(for: Theme.accent)))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(viewModel.routineName)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                    Text("\(viewModel.totalSetsCompleted) sets · \(Formatters.duration(viewModel.elapsed))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("Resume")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.regularMaterial)
+        }
+        .buttonStyle(.plain)
     }
 }
 

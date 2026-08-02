@@ -16,6 +16,7 @@ struct RoutinesListView: View {
             LazyVStack(spacing: 12) {
                 ForEach(viewModel.routines) { routine in
                     RoutineCard(routine: routine) {
+                        guard activeWorkout == nil else { Haptics.warning(); return }
                         Haptics.medium()
                         viewModel.markUsed(routine)
                         activeWorkout = WorkoutSessionViewModel(from: routine)
