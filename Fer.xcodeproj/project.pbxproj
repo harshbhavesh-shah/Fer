@@ -6,20 +6,128 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3A1D8E5B301A1239008CCB11 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3A1D8E5A301A1239008CCB11 /* GoogleService-Info.plist */; };
+		3A4BEFE1301A0DA100E57578 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3A4BEFE0301A0DA100E57578 /* FirebaseAuth */; };
+		3A4BEFE3301A0DA100E57578 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3A4BEFE2301A0DA100E57578 /* FirebaseCore */; };
+		3A4BEFE5301A0DA100E57578 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 3A4BEFE4301A0DA100E57578 /* FirebaseFirestore */; };
+		3AD01CD0301B4EE90053E45B /* Fer.app in Resources */ = {isa = PBXBuildFile; fileRef = 3A4BEF86301A08ED00E57578 /* Fer.app */; };
+		3AF1DE0D301C600000E57580 /* FerLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3AF1DE02301C600000E57580 /* FerLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3AD01CD1301B4EE90053E45B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3A4BEF7E301A08ED00E57578 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3A4BEF85301A08ED00E57578;
+			remoteInfo = Fer;
+		};
+		3AF1DE0B301C600000E57580 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3A4BEF7E301A08ED00E57578 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3AF1DE01301C600000E57580;
+			remoteInfo = FerLiveActivity;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3AF1DE0E301C600000E57580 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3AF1DE0D301C600000E57580 /* FerLiveActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		3A1D8E5A301A1239008CCB11 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		3A4BEF86301A08ED00E57578 /* Fer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3AD01CBE301AFC1C0053E45B /* Fer Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Fer Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3AF1DE02301C600000E57580 /* FerLiveActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FerLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3AE01CE1301B500000E57578 /* Exceptions for "Fer" folder in "Fer Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Data/ExerciseLibrary.swift,
+				Models/Exercise.swift,
+				Models/MuscleGroup.swift,
+				Models/RoutineTemplate.swift,
+				Models/UserProfile.swift,
+				Models/WorkoutMirror.swift,
+				Models/WorkoutSession.swift,
+				Utilities/Formatters.swift,
+			);
+			target = 3AD01CBD301AFC1C0053E45B /* Fer Watch App */;
+		};
+		3AF1DE0A301C600000E57580 /* Exceptions for "Fer" folder in "FerLiveActivity" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/WorkoutActivityAttributes.swift,
+			);
+			target = 3AF1DE01301C600000E57580 /* FerLiveActivity */;
+		};
+		3AF1DE0F301C600000E57580 /* Exceptions for "FerLiveActivity" folder in "FerLiveActivity" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3AF1DE01301C600000E57580 /* FerLiveActivity */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		3A4BEF88301A08ED00E57578 /* Fer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3AE01CE1301B500000E57578 /* Exceptions for "Fer" folder in "Fer Watch App" target */,
+				3AF1DE0A301C600000E57580 /* Exceptions for "Fer" folder in "FerLiveActivity" target */,
+			);
 			path = Fer;
+			sourceTree = "<group>";
+		};
+		3AE01CE0301B500000E57578 /* Fer Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Fer Watch App";
+			sourceTree = "<group>";
+		};
+		3AF1DE09301C600000E57580 /* FerLiveActivity */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3AF1DE0F301C600000E57580 /* Exceptions for "FerLiveActivity" folder in "FerLiveActivity" target */,
+			);
+			path = FerLiveActivity;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		3A4BEF83301A08ED00E57578 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A4BEFE3301A0DA100E57578 /* FirebaseCore in Frameworks */,
+				3A4BEFE1301A0DA100E57578 /* FirebaseAuth in Frameworks */,
+				3A4BEFE5301A0DA100E57578 /* FirebaseFirestore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3AD01CBB301AFC1C0053E45B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3AF1DE07301C600000E57580 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -32,7 +140,11 @@
 		3A4BEF7D301A08ED00E57578 = {
 			isa = PBXGroup;
 			children = (
+				3A1D8E5A301A1239008CCB11 /* GoogleService-Info.plist */,
 				3A4BEF88301A08ED00E57578 /* Fer */,
+				3AE01CE0301B500000E57578 /* Fer Watch App */,
+				3AF1DE09301C600000E57580 /* FerLiveActivity */,
+				3A4BEFE8301A10AA00E57578 /* Frameworks */,
 				3A4BEF87301A08ED00E57578 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,8 +153,17 @@
 			isa = PBXGroup;
 			children = (
 				3A4BEF86301A08ED00E57578 /* Fer.app */,
+				3AD01CBE301AFC1C0053E45B /* Fer Watch App.app */,
+				3AF1DE02301C600000E57580 /* FerLiveActivity.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		3A4BEFE8301A10AA00E57578 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -55,20 +176,70 @@
 				3A4BEF82301A08ED00E57578 /* Sources */,
 				3A4BEF83301A08ED00E57578 /* Frameworks */,
 				3A4BEF84301A08ED00E57578 /* Resources */,
+				3AF1DE0E301C600000E57580 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				3AF1DE0C301C600000E57580 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3A4BEF88301A08ED00E57578 /* Fer */,
 			);
 			name = Fer;
 			packageProductDependencies = (
+				3A4BEFE0301A0DA100E57578 /* FirebaseAuth */,
+				3A4BEFE2301A0DA100E57578 /* FirebaseCore */,
+				3A4BEFE4301A0DA100E57578 /* FirebaseFirestore */,
 			);
 			productName = Fer;
 			productReference = 3A4BEF86301A08ED00E57578 /* Fer.app */;
 			productType = "com.apple.product-type.application";
+		};
+		3AD01CBD301AFC1C0053E45B /* Fer Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3AD01CC9301AFC1E0053E45B /* Build configuration list for PBXNativeTarget "Fer Watch App" */;
+			buildPhases = (
+				3AD01CBA301AFC1C0053E45B /* Sources */,
+				3AD01CBB301AFC1C0053E45B /* Frameworks */,
+				3AD01CBC301AFC1C0053E45B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3AD01CD2301B4EE90053E45B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3AE01CE0301B500000E57578 /* Fer Watch App */,
+			);
+			name = "Fer Watch App";
+			packageProductDependencies = (
+			);
+			productName = "Fer Watch App Watch App";
+			productReference = 3AD01CBE301AFC1C0053E45B /* Fer Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		3AF1DE01301C600000E57580 /* FerLiveActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3AF1DE05301C600000E57580 /* Build configuration list for PBXNativeTarget "FerLiveActivity" */;
+			buildPhases = (
+				3AF1DE06301C600000E57580 /* Sources */,
+				3AF1DE07301C600000E57580 /* Frameworks */,
+				3AF1DE08301C600000E57580 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3AF1DE09301C600000E57580 /* FerLiveActivity */,
+			);
+			name = FerLiveActivity;
+			packageProductDependencies = (
+			);
+			productName = FerLiveActivity;
+			productReference = 3AF1DE02301C600000E57580 /* FerLiveActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -83,6 +254,12 @@
 					3A4BEF85301A08ED00E57578 = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					3AD01CBD301AFC1C0053E45B = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					3AF1DE01301C600000E57580 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 				};
 			};
 			buildConfigurationList = 3A4BEF81301A08ED00E57578 /* Build configuration list for PBXProject "Fer" */;
@@ -94,18 +271,39 @@
 			);
 			mainGroup = 3A4BEF7D301A08ED00E57578;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3A4BEFDF301A0DA100E57578 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3A4BEF87301A08ED00E57578 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				3A4BEF85301A08ED00E57578 /* Fer */,
+				3AD01CBD301AFC1C0053E45B /* Fer Watch App */,
+				3AF1DE01301C600000E57580 /* FerLiveActivity */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		3A4BEF84301A08ED00E57578 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3A1D8E5B301A1239008CCB11 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3AD01CBC301AFC1C0053E45B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3AD01CD0301B4EE90053E45B /* Fer.app in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3AF1DE08301C600000E57580 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +320,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3AD01CBA301AFC1C0053E45B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3AF1DE06301C600000E57580 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3AD01CD2301B4EE90053E45B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3A4BEF85301A08ED00E57578 /* Fer */;
+			targetProxy = 3AD01CD1301B4EE90053E45B /* PBXContainerItemProxy */;
+		};
+		3AF1DE0C301C600000E57580 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3AF1DE01301C600000E57580 /* FerLiveActivity */;
+			targetProxy = 3AF1DE0B301C600000E57580 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		3A4BEF8F301A08EF00E57578 /* Debug */ = {
@@ -256,6 +481,8 @@
 				DEVELOPMENT_TEAM = SXT7GC24KJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Fer shows and controls your Apple Music playback during workouts.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +515,8 @@
 				DEVELOPMENT_TEAM = SXT7GC24KJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "Fer shows and controls your Apple Music playback during workouts.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -305,6 +534,130 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		3AD01CCA301AFC1E0053E45B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SXT7GC24KJ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Fer Watch App";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Harshbshah.Fer-Watch-App.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		3AD01CCB301AFC1E0053E45B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SXT7GC24KJ;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Fer Watch App";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.Harshbshah.Fer-Watch-App.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		3AF1DE03301C600000E57580 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SXT7GC24KJ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FerLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FerLiveActivity;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Harshbshah.Fer.FerLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3AF1DE04301C600000E57580 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SXT7GC24KJ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FerLiveActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FerLiveActivity;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Harshbshah.Fer.FerLiveActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -331,7 +684,54 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		3AD01CC9301AFC1E0053E45B /* Build configuration list for PBXNativeTarget "Fer Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3AD01CCA301AFC1E0053E45B /* Debug */,
+				3AD01CCB301AFC1E0053E45B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3AF1DE05301C600000E57580 /* Build configuration list for PBXNativeTarget "FerLiveActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3AF1DE03301C600000E57580 /* Debug */,
+				3AF1DE04301C600000E57580 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3A4BEFDF301A0DA100E57578 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3A4BEFE0301A0DA100E57578 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A4BEFDF301A0DA100E57578 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		3A4BEFE2301A0DA100E57578 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A4BEFDF301A0DA100E57578 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		3A4BEFE4301A0DA100E57578 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A4BEFDF301A0DA100E57578 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3A4BEF7E301A08ED00E57578 /* Project object */;
 }

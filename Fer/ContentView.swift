@@ -2,23 +2,7 @@
 //  ContentView.swift
 //  Fer
 //
-//  Created by Harsh Shah on 29/07/26.
+//  This file is no longer used as the app's entry view — RootView.swift
+//  (in App/) now handles the auth gate + tab bar. Kept as an empty stub
+//  so nothing references a missing type; safe to delete from Xcode.
 //
-
-import SwiftUI
-
-struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
-
-#Preview {
-    ContentView()
-}
