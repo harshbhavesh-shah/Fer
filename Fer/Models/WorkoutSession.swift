@@ -43,6 +43,7 @@ struct LoggedExercise: Codable, Identifiable, Hashable {
     var exerciseId: String
     var exerciseName: String
     var sets: [SetEntry]
+    var notes: String = ""
 }
 
 struct SetEntry: Codable, Identifiable, Hashable {

@@ -21,25 +21,9 @@ final class SettingsStore: ObservableObject {
         didSet { UserDefaults.standard.set(defaultRestSeconds, forKey: Keys.defaultRestSeconds) }
     }
 
-    @Published var nowPlayingSource: NowPlayingSourceKind {
-        didSet { UserDefaults.standard.set(nowPlayingSource.rawValue, forKey: Keys.nowPlayingSource) }
-    }
-
-    enum NowPlayingSourceKind: String, CaseIterable {
-        case appleMusic, spotify
-
-        var label: String {
-            switch self {
-            case .appleMusic: return "Apple Music"
-            case .spotify: return "Spotify"
-            }
-        }
-    }
-
     private enum Keys {
         static let weightUnit = "settings.weightUnit"
         static let defaultRestSeconds = "settings.defaultRestSeconds"
-        static let nowPlayingSource = "settings.nowPlayingSource"
     }
 
     private init() {
@@ -51,10 +35,5 @@ final class SettingsStore: ObservableObject {
         }
         let storedRest = defaults.integer(forKey: Keys.defaultRestSeconds)
         defaultRestSeconds = storedRest > 0 ? storedRest : 90
-        if let raw = defaults.string(forKey: Keys.nowPlayingSource), let source = NowPlayingSourceKind(rawValue: raw) {
-            nowPlayingSource = source
-        } else {
-            nowPlayingSource = .appleMusic
-        }
     }
 }

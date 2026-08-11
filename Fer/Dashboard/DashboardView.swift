@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import Charts
 
 struct DashboardView: View {
     @ObservedObject var routinesVM: RoutinesViewModel
@@ -104,53 +103,57 @@ struct DashboardView: View {
     }
 }
 
+/// Built as a single unified column layout (bar + weekday label + streak dot
+/// all in one VStack per day) rather than a Swift Charts bar chart with a
+/// separately-laid-out dot row underneath — those two used different layout
+/// systems (Charts' internal axis margins vs. a plain HStack), so their
+/// columns never reliably lined up.
 private struct WeeklyTrendCard: View {
     @ObservedObject var historyVM: HistoryViewModel
     @ObservedObject private var settings = SettingsStore.shared
 
-    private var dailyVolume: [(date: Date, volume: Double)] {
-        historyVM.dailyVolume(last: 7)
+    private let barAreaHeight: CGFloat = 60
+    private let minBarHeight: CGFloat = 4
+
+    private var days: [(date: Date, volume: Double, hasWorkout: Bool)] {
+        let volumes = historyVM.dailyVolume(last: 7)
+        let workoutDates = historyVM.workoutDates(last: 7)
+        return volumes.map { (date: $0.date, volume: $0.volume, hasWorkout: workoutDates.contains($0.date)) }
     }
 
-    private var workoutDates: Set<Date> {
-        historyVM.workoutDates(last: 7)
+    private var maxVolume: Double {
+        max(days.map(\.volume).max() ?? 0, 1)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("This Week").font(.headline)
 
-            Chart(dailyVolume, id: \.date) { point in
-                BarMark(
-                    x: .value("Day", point.date, unit: .day),
-                    y: .value("Volume", Formatters.displayValue(point.volume, unit: settings.weightUnit))
-                )
-                .foregroundStyle(Theme.accent)
-                .cornerRadius(4)
-            }
-            .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { _ in
-                    AxisValueLabel(format: .dateTime.weekday(.narrow))
-                }
-            }
-            .chartYAxis(.hidden)
-            .frame(height: 100)
+            HStack(alignment: .bottom, spacing: 10) {
+                ForEach(days, id: \.date) { day in
+                    VStack(spacing: 6) {
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(day.volume > 0 ? Theme.accent : Color.secondary.opacity(0.15))
+                            .frame(height: barHeight(for: day.volume))
 
-            HStack(spacing: 8) {
-                ForEach(lastSevenDays, id: \.self) { day in
-                    Circle()
-                        .fill(workoutDates.contains(day) ? Theme.accent : Color.secondary.opacity(0.15))
-                        .frame(width: 10, height: 10)
+                        Text(day.date, format: .dateTime.weekday(.narrow))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+
+                        Circle()
+                            .fill(day.hasWorkout ? Theme.accent : Color.secondary.opacity(0.15))
+                            .frame(width: 6, height: 6)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
         .cardStyle()
     }
 
-    private var lastSevenDays: [Date] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        return (0..<7).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }
+    private func barHeight(for volume: Double) -> CGFloat {
+        guard volume > 0 else { return minBarHeight }
+        return max(minBarHeight, barAreaHeight * CGFloat(volume / maxVolume))
     }
 }
 

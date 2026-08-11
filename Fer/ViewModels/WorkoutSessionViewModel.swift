@@ -212,6 +212,10 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         exercises.firstIndex { ex in ex.sets.contains { !$0.isCompleted } } ?? max(exercises.count - 1, 0)
     }
 
+    var currentExerciseName: String? {
+        exercises.indices.contains(currentExerciseIndex) ? exercises[currentExerciseIndex].exerciseName : nil
+    }
+
     var snapshot: WorkoutMirrorSnapshot {
         WorkoutMirrorSnapshot(
             routineName: routineName,

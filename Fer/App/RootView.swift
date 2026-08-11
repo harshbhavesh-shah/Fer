@@ -32,6 +32,7 @@ struct MainTabView: View {
     @StateObject private var historyVM = HistoryViewModel()
     @State private var activeWorkout: WorkoutSessionViewModel?
     @State private var isWorkoutFullScreen = false
+    @State private var showingMiniBarDiscardConfirm = false
 
     var body: some View {
         TabView {
@@ -62,15 +63,31 @@ struct MainTabView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let vm = activeWorkout, !isWorkoutFullScreen {
-                ActiveWorkoutMiniBar(viewModel: vm) {
-                    Haptics.light()
-                    isWorkoutFullScreen = true
-                }
+                ActiveWorkoutMiniBar(
+                    viewModel: vm,
+                    onExpand: {
+                        Haptics.light()
+                        isWorkoutFullScreen = true
+                    },
+                    onDiscard: {
+                        Haptics.warning()
+                        showingMiniBarDiscardConfirm = true
+                    }
+                )
+                .padding(.horizontal, 8)
+                .padding(.bottom, 4)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: activeWorkout == nil)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isWorkoutFullScreen)
+        .confirmationDialog("Discard this workout?", isPresented: $showingMiniBarDiscardConfirm, titleVisibility: .visible) {
+            Button("Discard Workout", role: .destructive) {
+                activeWorkout?.discard()
+                activeWorkout = nil
+            }
+            Button("Keep Going", role: .cancel) {}
+        }
         .fullScreenCover(isPresented: $isWorkoutFullScreen) {
             if let vm = activeWorkout {
                 ActiveWorkoutView(
@@ -96,39 +113,62 @@ struct MainTabView: View {
     }
 }
 
+/// Dark capsule pill docked directly above the tab bar while a workout is
+/// minimized — matches Hevy's minimized workout bar exactly (chevron-up to
+/// expand, green pulsing dot + elapsed time, current exercise below, trash
+/// to discard without reopening).
 private struct ActiveWorkoutMiniBar: View {
     @ObservedObject var viewModel: WorkoutSessionViewModel
-    let onTap: () -> Void
+    let onExpand: () -> Void
+    let onDiscard: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.headline)
+        HStack(spacing: 14) {
+            Button(action: onExpand) {
+                Image(systemName: "chevron.up")
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
-                    .frame(width: 32, height: 32)
-                    .background(Circle().fill(Theme.gradient(for: Theme.accent)))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.routineName)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-                    Text("\(viewModel.totalSetsCompleted) sets · \(Formatters.duration(viewModel.elapsed))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Text("Resume")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.12))
+                    .clipShape(Circle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(.regularMaterial)
+
+            Button(action: onExpand) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 7, height: 7)
+                        (Text("Workout ").font(.subheadline.weight(.bold))
+                            + Text(Formatters.duration(viewModel.elapsed)).font(.subheadline).foregroundStyle(.white.opacity(0.6)))
+                            .foregroundStyle(.white)
+                    }
+                    if let exerciseName = viewModel.currentExerciseName {
+                        Text(exerciseName)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .lineLimit(1)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Button(action: onDiscard) {
+                Image(systemName: "trash")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.red.opacity(0.8))
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.12))
+                    .clipShape(Circle())
+            }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(white: 0.13))
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.3), radius: 10, y: 4)
     }
 }
 

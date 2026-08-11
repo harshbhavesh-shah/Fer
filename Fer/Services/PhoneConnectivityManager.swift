@@ -30,6 +30,8 @@ final class PhoneConnectivityManager: NSObject, ObservableObject {
 
     static let shared = PhoneConnectivityManager()
 
+    @Published private(set) var isWatchReachable = false
+
     private weak var activeWorkout: WorkoutSessionViewModel?
     private var session: WCSession?
     private var latestRoutines: [RoutineTemplate] = []
@@ -120,9 +122,14 @@ final class PhoneConnectivityManager: NSObject, ObservableObject {
 extension PhoneConnectivityManager: WCSessionDelegate {
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         Task { @MainActor in
+            self.isWatchReachable = session.isReachable
             self.pushSignInState(isSignedIn: AuthService.shared.isSignedIn, displayName: AuthService.shared.currentUser?.displayName)
             self.pushRoutines(self.latestRoutines)
         }
+    }
+
+    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        Task { @MainActor in self.isWatchReachable = session.isReachable }
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}

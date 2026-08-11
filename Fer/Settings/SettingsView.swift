@@ -41,18 +41,6 @@ struct SettingsView: View {
                     Label("Default Rest Time", systemImage: "timer")
                 }
                 .onChange(of: settings.defaultRestSeconds) { _, _ in Haptics.selection() }
-
-                Picker(selection: $settings.nowPlayingSource) {
-                    ForEach(SettingsStore.NowPlayingSourceKind.allCases, id: \.self) { source in
-                        Text(source.label).tag(source)
-                    }
-                } label: {
-                    Label("Now Playing Source", systemImage: "music.note")
-                }
-                .onChange(of: settings.nowPlayingSource) { _, _ in
-                    Haptics.selection()
-                    NowPlayingManager.shared.refreshSource()
-                }
             }
 
             Section {
