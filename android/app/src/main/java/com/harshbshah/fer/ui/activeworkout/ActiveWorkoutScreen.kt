@@ -29,13 +29,16 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,6 +51,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -59,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -193,6 +198,7 @@ private fun WorkoutContent(
     val exercises by viewModel.exercises.collectAsStateWithLifecycle()
     val elapsedSeconds by viewModel.elapsedSeconds.collectAsStateWithLifecycle()
     val isResting by viewModel.isResting.collectAsStateWithLifecycle()
+    val restSecondsByExerciseId by viewModel.restSecondsByExerciseId.collectAsStateWithLifecycle()
     val hazeState = remember { HazeState() }
     // Derived from the observed `exercises` state above, not viewModel.totalSetsCompleted
     // directly — see the matching comment on the Finish-confirmation dialog for why.
@@ -237,11 +243,15 @@ private fun WorkoutContent(
                     exercise = exercise,
                     weightUnit = weightUnit,
                     previousSets = viewModel.previousSets(exercise.exerciseId),
+                    restSeconds = restSecondsByExerciseId[exercise.exerciseId] ?: viewModel.restSecondsFor(exercise.exerciseId),
                     onAddSet = { viewModel.addSet(index) },
                     onToggleSet = { setIndex -> viewModel.toggleComplete(index, setIndex) },
                     onRemoveSet = { setIndex -> viewModel.removeSet(index, setIndex) },
                     onUpdateWeight = { setIndex, weight -> viewModel.updateWeight(index, setIndex, weight) },
                     onUpdateReps = { setIndex, reps -> viewModel.updateReps(index, setIndex, reps) },
+                    onToggleWarmup = { setIndex -> viewModel.toggleWarmup(index, setIndex) },
+                    onUpdateNotes = { notes -> viewModel.updateNotes(index, notes) },
+                    onUpdateRestSeconds = { seconds -> viewModel.setRestSeconds(exercise.exerciseId, seconds) },
                     onRemoveExercise = { viewModel.removeExercise(index) },
                     modifier = Modifier.animateItem()
                 )
@@ -353,26 +363,51 @@ private fun RestTimerBar(viewModel: ActiveWorkoutViewModel) {
     }
 }
 
+private val restTimerOptions = listOf(15, 30, 45, 60, 90, 120, 180)
+
+/** "Xmin Ys" / "Xs" / "Off" — mirrors Hevy's "Rest Timer: 1min 30s" label. */
+private fun restTimerLabel(seconds: Int): String {
+    if (seconds <= 0) return "Off"
+    val minutes = seconds / 60
+    val remainder = seconds % 60
+    return when {
+        minutes == 0 -> "${remainder}s"
+        remainder == 0 -> "${minutes}min"
+        else -> "${minutes}min ${remainder}s"
+    }
+}
+
 @Composable
 private fun ExerciseLogCard(
     exercise: LoggedExercise,
     weightUnit: WeightUnit,
     previousSets: List<SetEntry>,
+    restSeconds: Int,
     onAddSet: () -> Unit,
     onToggleSet: (Int) -> Unit,
     onRemoveSet: (Int) -> Unit,
     onUpdateWeight: (Int, Double) -> Unit,
     onUpdateReps: (Int, Int) -> Unit,
+    onToggleWarmup: (Int) -> Unit,
+    onUpdateNotes: (String) -> Unit,
+    onUpdateRestSeconds: (Int) -> Unit,
     onRemoveExercise: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var restMenuExpanded by remember { mutableStateOf(false) }
     Column(
         modifier = modifier.cardStyle().animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(exercise.exerciseName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text(
+                exercise.exerciseName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f)
+            )
             Box {
                 IconButton(onClick = { menuExpanded = true }) {
                     Icon(Icons.Filled.MoreVert, contentDescription = "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -384,6 +419,47 @@ private fun ExerciseLogCard(
                         onClick = { menuExpanded = false; onRemoveExercise() }
                     )
                 }
+            }
+        }
+
+        var notesText by remember(exercise.id) { mutableStateOf(exercise.notes) }
+        BasicTextField(
+            value = notesText,
+            onValueChange = { notesText = it; onUpdateNotes(it) },
+            textStyle = TextStyle(
+                fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorationBox = { inner ->
+                if (notesText.isEmpty()) {
+                    Text(
+                        "Add notes here...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                }
+                inner()
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Box {
+            TextButton(onClick = { restMenuExpanded = true }, contentPadding = PaddingValues(0.dp)) {
+                Icon(Icons.Filled.Timer, contentDescription = null, modifier = Modifier.size(16.dp))
+                Text("  Rest Timer: ${restTimerLabel(restSeconds)}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
+            }
+            DropdownMenu(expanded = restMenuExpanded, onDismissRequest = { restMenuExpanded = false }) {
+                restTimerOptions.forEach { seconds ->
+                    DropdownMenuItem(
+                        text = { Text(restTimerLabel(seconds)) },
+                        onClick = { restMenuExpanded = false; onUpdateRestSeconds(seconds) }
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text("Off") },
+                    onClick = { restMenuExpanded = false; onUpdateRestSeconds(0) }
+                )
             }
         }
 
@@ -403,6 +479,7 @@ private fun ExerciseLogCard(
                 previous = previousSets.getOrNull(index),
                 weightUnit = weightUnit,
                 onToggle = { onToggleSet(index) },
+                onToggleWarmup = { onToggleWarmup(index) },
                 onWeightChange = { onUpdateWeight(index, it) },
                 onRepsChange = { onUpdateReps(index, it) },
                 onDelete = { onRemoveSet(index) }
@@ -423,6 +500,7 @@ private fun SetRow(
     previous: SetEntry?,
     weightUnit: WeightUnit,
     onToggle: () -> Unit,
+    onToggleWarmup: () -> Unit,
     onWeightChange: (Double) -> Unit,
     onRepsChange: (Int) -> Unit,
     onDelete: () -> Unit
@@ -442,7 +520,12 @@ private fun SetRow(
             )
             .padding(vertical = 4.dp)
     ) {
-        Text("$index", modifier = Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
+        Text(
+            if (set.isWarmup) "W" else "$index",
+            modifier = Modifier.weight(0.5f).clickable(onClick = onToggleWarmup),
+            fontWeight = FontWeight.Bold,
+            color = if (set.isWarmup) Color(0xFFFF9800) else MaterialTheme.colorScheme.onSurface
+        )
 
         // Last time's performance for this same set position — reference only,
         // not editable — matching Hevy's "Previous" column so entries never
@@ -500,11 +583,11 @@ private fun SetRow(
         Box(
             modifier = Modifier
                 .size(32.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(if (set.isCompleted) Color(0xFF43A047) else MaterialTheme.colorScheme.surfaceVariant)
+                .clip(CircleShape)
+                .background(if (set.isCompleted) Color(0xFF43A047) else Color.Transparent)
                 .then(
                     if (set.isCompleted) Modifier
-                    else Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                    else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
                 .clickable(onClick = onToggle),
             contentAlignment = Alignment.Center

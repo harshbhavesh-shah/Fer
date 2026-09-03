@@ -34,6 +34,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         startClock()
         PhoneConnectivityManager.shared.attach(self)
         LiveActivityManager.shared.start(routineName: routineName, contentState: liveActivityContentState)
+        persistDraft()
     }
 
     convenience init(from routine: RoutineTemplate) {
@@ -48,6 +49,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         for re in routine.exercises {
             restSecondsByExerciseId[re.exerciseId] = re.restSeconds
         }
+        persistDraft()
     }
 
     convenience init(blank: Bool = true) {
@@ -123,6 +125,41 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         persistDraft()
     }
 
+    func updateWeight(exerciseIndex: Int, setIndex: Int, weight: Double) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        exercises[exerciseIndex].sets[setIndex].weight = weight
+        updateLiveActivity()
+        persistDraft()
+    }
+
+    func updateReps(exerciseIndex: Int, setIndex: Int, reps: Int) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        exercises[exerciseIndex].sets[setIndex].reps = reps
+        updateLiveActivity()
+        persistDraft()
+    }
+
+    func toggleWarmup(exerciseIndex: Int, setIndex: Int) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        exercises[exerciseIndex].sets[setIndex].isWarmup.toggle()
+        updateLiveActivity()
+        persistDraft()
+    }
+
+    func updateNotes(exerciseIndex: Int, notes: String) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].notes = notes
+        persistDraft()
+    }
+
+    func updateRestSeconds(exerciseId: String, seconds: Int) {
+        restSecondsByExerciseId[exerciseId] = seconds
+        persistDraft()
+    }
+
     // MARK: - Rest timer
 
     func startRest(seconds: Int) {
@@ -193,6 +230,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         restTimer?.cancel()
         let session = buildSession()
         try? await FirestoreService.shared.saveWorkout(session)
+        HealthKitWriter.shared.save(session)
         PhoneConnectivityManager.shared.detach()
         LiveActivityManager.shared.end()
         WorkoutDraftStore.clear()
@@ -229,14 +267,25 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
     }
 
     var liveActivityContentState: WorkoutActivityAttributes.ContentState {
-        WorkoutActivityAttributes.ContentState(
-            currentExerciseName: exercises.indices.contains(currentExerciseIndex) ? exercises[currentExerciseIndex].exerciseName : routineName,
-            completedSets: totalSetsCompleted,
-            totalSets: exercises.reduce(0) { $0 + $1.sets.count },
+        LiveActivityContent.build(
+            exercises: exercises,
+            startedAt: startedAt,
             isResting: isResting,
             restEndDate: isResting ? Date().addingTimeInterval(TimeInterval(restRemaining)) : nil,
-            elapsedStartDate: startedAt
+            weightUnit: SettingsStore.shared.weightUnit
         )
+    }
+
+    /// Picks up any set completions made from the Lock Screen's checkmark
+    /// button while the app was suspended (CompleteSetIntent writes those
+    /// straight to the shared draft, not to this in-memory array) — called
+    /// when the active workout screen comes back to the foreground.
+    func refreshFromExternalUpdates() {
+        guard let draft = WorkoutDraftStore.load(), draft.startedAt == startedAt else { return }
+        guard draft.exercises != exercises else { return }
+        exercises = draft.exercises
+        notifyChange()
+        updateLiveActivity()
     }
 
     private func notifyChange() {
@@ -252,7 +301,8 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
             routineName: routineName,
             exercises: exercises,
             startedAt: startedAt,
-            restSecondsByExerciseId: restSecondsByExerciseId
+            restSecondsByExerciseId: restSecondsByExerciseId,
+            weightUnitRaw: SettingsStore.shared.weightUnit.rawValue
         ))
     }
 

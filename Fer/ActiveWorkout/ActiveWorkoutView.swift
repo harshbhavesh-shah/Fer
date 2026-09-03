@@ -21,6 +21,7 @@ struct ActiveWorkoutView: View {
 
     @ObservedObject private var connectivity = PhoneConnectivityManager.shared
     @ObservedObject private var heartRate = HeartRateMonitor.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var showingPicker = false
     @State private var showingDiscardConfirm = false
@@ -31,6 +32,9 @@ struct ActiveWorkoutView: View {
             .preferredColorScheme(.dark)
             .onAppear { heartRate.start() }
             .onDisappear { heartRate.stop() }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active { viewModel.refreshFromExternalUpdates() }
+            }
     }
 
     private var progressFraction: Double {
@@ -63,19 +67,19 @@ struct ActiveWorkoutView: View {
                                     }
                                 },
                                 onUpdateWeight: { setIndex, weight in
-                                    viewModel.exercises[index].sets[setIndex].weight = weight
+                                    viewModel.updateWeight(exerciseIndex: index, setIndex: setIndex, weight: weight)
                                 },
                                 onUpdateReps: { setIndex, reps in
-                                    viewModel.exercises[index].sets[setIndex].reps = reps
+                                    viewModel.updateReps(exerciseIndex: index, setIndex: setIndex, reps: reps)
                                 },
                                 onToggleWarmup: { setIndex in
-                                    viewModel.exercises[index].sets[setIndex].isWarmup.toggle()
+                                    viewModel.toggleWarmup(exerciseIndex: index, setIndex: setIndex)
                                 },
                                 onUpdateNotes: { notes in
-                                    viewModel.exercises[index].notes = notes
+                                    viewModel.updateNotes(exerciseIndex: index, notes: notes)
                                 },
                                 onUpdateRestSeconds: { seconds in
-                                    viewModel.restSecondsByExerciseId[exercise.exerciseId] = seconds
+                                    viewModel.updateRestSeconds(exerciseId: exercise.exerciseId, seconds: seconds)
                                 },
                                 onRemoveExercise: {
                                     withAnimation { viewModel.removeExercise(at: index) }
@@ -330,6 +334,16 @@ private struct ExerciseLogCard: View {
         Binding(get: { exercise.notes }, set: onUpdateNotes)
     }
 
+    /// "Xmin Ys" / "Xs" / "Off" — mirrors Android's restTimerLabel, and Hevy's own "Rest Timer: 1min 30s".
+    static func restTimerLabel(_ seconds: Int) -> String {
+        guard seconds > 0 else { return "Off" }
+        let minutes = seconds / 60
+        let remainder = seconds % 60
+        if minutes == 0 { return "\(remainder)s" }
+        if remainder == 0 { return "\(minutes)min" }
+        return "\(minutes)min \(remainder)s"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -370,7 +384,7 @@ private struct ExerciseLogCard: View {
                     onUpdateRestSeconds(0)
                 }
             } label: {
-                Label(restSeconds > 0 ? "Rest Timer: \(restSeconds)s" : "Rest Timer: OFF", systemImage: "timer")
+                Label("Rest Timer: \(Self.restTimerLabel(restSeconds))", systemImage: "timer")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Theme.accent)
             }
@@ -546,18 +560,28 @@ private struct SetRow: View {
                 }
                 onToggle()
             }) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(set.isCompleted ? .white : .white.opacity(0.25))
-                    .scaleEffect(set.isCompleted ? 1.15 : 1.0)
-                    .symbolEffect(.bounce, value: justCompleted)
+                ZStack {
+                    Circle()
+                        .fill(set.isCompleted ? Color.green : Color.clear)
+                        .overlay(
+                            Circle().stroke(Color.white.opacity(set.isCompleted ? 0 : 0.3), lineWidth: 1.5)
+                        )
+                    if set.isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .frame(width: 26, height: 26)
+                .scaleEffect(set.isCompleted ? 1.1 : 1.0)
+                .symbolEffect(.bounce, value: justCompleted)
             }
             .frame(width: 36)
             .animation(.spring(response: 0.3, dampingFraction: 0.5), value: set.isCompleted)
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 8)
-        .background(set.isCompleted ? Color.green.opacity(0.55) : Color.clear)
+        .background(set.isCompleted ? Color.green.opacity(0.18) : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .onAppear {
             resyncWeightText()

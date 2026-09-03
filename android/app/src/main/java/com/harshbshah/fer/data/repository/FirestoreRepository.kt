@@ -3,6 +3,7 @@ package com.harshbshah.fer.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import com.harshbshah.fer.data.ExerciseLibrary
 import com.harshbshah.fer.data.model.RoutineTemplate
 import com.harshbshah.fer.data.model.SetEntry
@@ -38,7 +39,7 @@ class FirestoreRepository {
 
     suspend fun createUserProfile(uid: String, displayName: String, email: String) {
         val profile = UserProfile(displayName = displayName, email = email)
-        db.collection("users").document(uid).set(profile).await()
+        db.collection("users").document(uid).set(profile, SetOptions.merge()).await()
     }
 
     suspend fun fetchUserProfile(): UserProfile? {
@@ -75,7 +76,7 @@ class FirestoreRepository {
         } else {
             db.collection("users").document(uid).collection("routines").document()
         }
-        ref.set(toSave).await()
+        ref.set(toSave, SetOptions.merge()).await()
     }
 
     suspend fun deleteRoutine(id: String) {
@@ -118,7 +119,7 @@ class FirestoreRepository {
         } else {
             db.collection("users").document(uid).collection("workouts").document()
         }
-        ref.set(toSave).await()
+        ref.set(toSave, SetOptions.merge()).await()
         return ref.id
     }
 

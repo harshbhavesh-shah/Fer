@@ -39,7 +39,8 @@ data class LoggedExercise @JvmOverloads constructor(
     var id: String = UUID.randomUUID().toString(),
     var exerciseId: String = "",
     var exerciseName: String = "",
-    var sets: List<SetEntry> = emptyList()
+    var sets: List<SetEntry> = emptyList(),
+    var notes: String = ""
 )
 
 data class SetEntry @JvmOverloads constructor(

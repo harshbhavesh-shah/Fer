@@ -27,7 +27,8 @@ class ActiveWorkoutViewModel(
     private val pastWorkouts: List<WorkoutSession> = emptyList()
 ) : ViewModel() {
 
-    private val restSecondsByExerciseId = mutableMapOf<String, Int>()
+    private val _restSecondsByExerciseId = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val restSecondsByExerciseId: StateFlow<Map<String, Int>> = _restSecondsByExerciseId
 
     /** Sets from the most recent past workout that logged this exercise, same order —
      *  set N's "Previous" is that workout's set N, matching Hevy's reference column. */
@@ -86,8 +87,17 @@ class ActiveWorkoutViewModel(
     }
 
     fun setRestSecondsFor(routine: RoutineTemplate) {
-        for (re in routine.exercises) restSecondsByExerciseId[re.exerciseId] = re.restSeconds
+        _restSecondsByExerciseId.update { current ->
+            current + routine.exercises.associate { it.exerciseId to it.restSeconds }
+        }
     }
+
+    fun setRestSeconds(exerciseId: String, seconds: Int) {
+        _restSecondsByExerciseId.update { it + (exerciseId to seconds) }
+        Haptics.selection()
+    }
+
+    fun restSecondsFor(exerciseId: String): Int = _restSecondsByExerciseId.value[exerciseId] ?: defaultRestSeconds
 
     // MARK: - Editing
 
@@ -138,10 +148,24 @@ class ActiveWorkoutViewModel(
         updateSet(exerciseIndex, setIndex) { it.copy(isCompleted = nowCompleted) }
         if (nowCompleted) {
             Haptics.success()
-            val exerciseId = target.exerciseId
-            startRest(restSecondsByExerciseId[exerciseId] ?: defaultRestSeconds)
+            startRest(restSecondsFor(target.exerciseId))
         } else {
             Haptics.selection()
+        }
+    }
+
+    fun toggleWarmup(exerciseIndex: Int, setIndex: Int) {
+        val list = _exercises.value
+        if (exerciseIndex !in list.indices || setIndex !in list[exerciseIndex].sets.indices) return
+        val nowWarmup = !list[exerciseIndex].sets[setIndex].isWarmup
+        updateSet(exerciseIndex, setIndex) { it.copy(isWarmup = nowWarmup) }
+        Haptics.selection()
+    }
+
+    fun updateNotes(exerciseIndex: Int, notes: String) {
+        _exercises.update { list ->
+            if (exerciseIndex !in list.indices) return@update list
+            list.toMutableList().also { it[exerciseIndex] = it[exerciseIndex].copy(notes = notes) }
         }
     }
 

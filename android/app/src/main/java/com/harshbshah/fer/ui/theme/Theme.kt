@@ -15,11 +15,14 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
-// RGB(0.31, 0.35, 0.97) from Fer/Utilities/Theme.swift — read directly from the
-// iOS source of truth this time, not eyeballed (the original FF5A32 orange
-// used here was picked without checking iOS's actual value).
-val FerAccent = Color(0xFF4F59F7)
-private val FerAccentDark = Color(0xFF8B90FF)
+// RGB(0.17, 0.42, 0.93) from Fer/Utilities/Theme.swift (Theme.accent) — the
+// iOS source of truth. Keep these two in sync whenever iOS's accent changes;
+// this value had drifted out of sync with iOS before (was 0xFF4F59F7).
+val FerAccent = Color(0xFF2B6BED)
+// Lightened for legibility against dark surfaces — iOS uses one accent for
+// both appearances, but Android's Material3 dark scheme needs a lifted tone
+// for its primary role to keep contrast, so this stays a same-hue variant.
+private val FerAccentDark = Color(0xFF759FF3)
 
 // Material3's lightColorScheme()/darkColorScheme() fall back to the stock
 // (purple-tinted) Material baseline palette for any role not explicitly
@@ -99,11 +102,12 @@ private val DarkColors = darkColorScheme(
     onErrorContainer = Color(0xFFFFDAD6)
 )
 
-// 20.dp explicitly — matches iOS's `cardCorner: CGFloat = 20` in Theme.swift.
+// 14.dp explicitly — matches iOS's `cardCorner: CGFloat = 14` in Theme.swift.
 // (Previously RoundedCornerShape(16) with a bare Int resolved to the
 // *percent* overload — 16% corner rounding, not 16dp — so cards were sized
-// inconsistently depending on their own dimensions.)
-val CardShape = RoundedCornerShape(20.dp)
+// inconsistently depending on their own dimensions. Also previously drifted
+// to 20.dp, out of sync with iOS's actual value.)
+val CardShape = RoundedCornerShape(14.dp)
 
 fun ferGradient(base: Color) = Brush.linearGradient(listOf(base, base.copy(alpha = 0.75f)))
 
