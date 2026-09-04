@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.harshbshah.fer.data.ExerciseLibrary
+import com.harshbshah.fer.data.model.ActiveSessionSnapshot
 import com.harshbshah.fer.data.model.RoutineTemplate
 import com.harshbshah.fer.data.model.SetEntry
 import com.harshbshah.fer.data.model.UserProfile
@@ -126,6 +127,34 @@ class FirestoreRepository {
     suspend fun deleteWorkout(id: String) {
         val uid = requireUid()
         db.collection("users").document(uid).collection("workouts").document(id).delete().await()
+    }
+
+    // MARK: - Active session (cross-device live sync)
+
+    /** Emits the live workout doc — non-null only while some device (this one, or
+     *  another platform on the same account) has a workout actively in progress. */
+    fun activeSessionFlow(): Flow<ActiveSessionSnapshot?> = callbackFlow {
+        val uid = currentUid
+        if (uid == null) {
+            trySend(null)
+            awaitClose { }
+            return@callbackFlow
+        }
+        val registration = db.collection("users").document(uid).collection("activeSession").document("current")
+            .addSnapshotListener { snapshot, _ ->
+                trySend(if (snapshot?.exists() == true) snapshot.toObject(ActiveSessionSnapshot::class.java) else null)
+            }
+        awaitClose { registration.remove() }
+    }
+
+    fun pushActiveSession(snapshot: ActiveSessionSnapshot) {
+        val uid = currentUid ?: return
+        db.collection("users").document(uid).collection("activeSession").document("current").set(snapshot)
+    }
+
+    fun clearActiveSession() {
+        val uid = currentUid ?: return
+        db.collection("users").document(uid).collection("activeSession").document("current").delete()
     }
 
     /** Historical sets for a specific exercise, oldest first, for progress charts. */

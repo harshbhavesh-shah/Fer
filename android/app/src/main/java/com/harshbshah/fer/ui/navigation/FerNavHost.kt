@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,6 +53,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.HazeMaterials
 import com.harshbshah.fer.data.ExerciseLibrary
+import com.harshbshah.fer.data.model.ActiveSessionSnapshot
 import com.harshbshah.fer.data.model.Exercise
 import com.harshbshah.fer.data.model.RoutineTemplate
 import com.harshbshah.fer.ui.activeworkout.ActiveWorkoutScreen
@@ -136,6 +138,15 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
 
     var pendingWorkoutStart by remember { mutableStateOf<Pair<String, RoutineTemplate?>?>(null) }
     var pendingExercisePick by remember { mutableStateOf<((Exercise) -> Unit)?>(null) }
+    var pendingRemoteSession by remember { mutableStateOf<ActiveSessionSnapshot?>(null) }
+
+    // Detects a workout that's live right now on another device signed into this
+    // same account (iOS, most likely) — surfaced as a "join" banner on the
+    // Dashboard. Collected here (not inside DashboardScreen) so it keeps updating
+    // even while the user is on another tab.
+    val liveSession by produceState<ActiveSessionSnapshot?>(initialValue = null, container) {
+        container.firestoreRepository.activeSessionFlow().collect { value = it }
+    }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -175,6 +186,11 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
                     historyVM = historyVM,
                     weightUnit = weightUnit,
                     bottomContentPadding = BottomNavHeight,
+                    liveSession = liveSession,
+                    onJoinLiveSession = {
+                        pendingRemoteSession = liveSession
+                        navController.navigate(Routes.ACTIVE_WORKOUT)
+                    },
                     onStartBlank = {
                         pendingWorkoutStart = "Quick Workout" to null
                         navController.navigate(Routes.ACTIVE_WORKOUT)
@@ -266,26 +282,39 @@ private fun MainNavHost(container: AppContainer, factory: ViewModelFactory) {
 
             composable(Routes.ACTIVE_WORKOUT) {
                 val start = pendingWorkoutStart
-                val (routineName, exercises) = remember(start) {
-                    val routine = start?.second
-                    if (routine != null) {
-                        ActiveWorkoutViewModel.fromRoutine(routine)
-                    } else {
-                        (start?.first ?: "Quick Workout") to emptyList()
-                    }
-                }
+                val remoteSession = pendingRemoteSession
                 val activeWorkoutVM: ActiveWorkoutViewModel = viewModel(
                     factory = object : androidx.lifecycle.ViewModelProvider.Factory {
                         override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                             @Suppress("UNCHECKED_CAST")
-                            val vm = ActiveWorkoutViewModel(
-                                container.firestoreRepository,
-                                routineName,
-                                exercises,
-                                defaultRestSeconds,
-                                pastWorkouts = historyVM.workouts.value
-                            )
-                            start?.second?.let { vm.setRestSecondsFor(it) }
+                            val vm = if (remoteSession != null) {
+                                val (routineName, exercises, startedAt) = ActiveWorkoutViewModel.fromRemoteSession(remoteSession)
+                                ActiveWorkoutViewModel(
+                                    container.firestoreRepository,
+                                    routineName,
+                                    exercises,
+                                    defaultRestSeconds,
+                                    pastWorkouts = historyVM.workouts.value,
+                                    startedAt = startedAt,
+                                    weightUnitRaw = remoteSession.weightUnitRaw,
+                                    isRemoteSession = true
+                                ).also { it.setRestSecondsMap(remoteSession.restSecondsByExerciseId) }
+                            } else {
+                                val routine = start?.second
+                                val (routineName, exercises) = if (routine != null) {
+                                    ActiveWorkoutViewModel.fromRoutine(routine)
+                                } else {
+                                    (start?.first ?: "Quick Workout") to emptyList()
+                                }
+                                ActiveWorkoutViewModel(
+                                    container.firestoreRepository,
+                                    routineName,
+                                    exercises,
+                                    defaultRestSeconds,
+                                    pastWorkouts = historyVM.workouts.value,
+                                    weightUnitRaw = weightUnit.name
+                                ).also { vm -> routine?.let { vm.setRestSecondsFor(it) } }
+                            }
                             return vm as T
                         }
                     }

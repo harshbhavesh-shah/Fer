@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,9 +33,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.harshbshah.fer.data.model.ActiveSessionSnapshot
 import com.harshbshah.fer.data.model.RoutineTemplate
 import com.harshbshah.fer.data.model.UserProfile.WeightUnit
 import com.harshbshah.fer.data.model.WorkoutSession
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.Surface
 import com.harshbshah.fer.ui.components.BarChart
 import com.harshbshah.fer.ui.components.WorkoutSummaryCard
 import com.harshbshah.fer.ui.components.cardStyle
@@ -50,6 +54,8 @@ fun DashboardScreen(
     historyVM: HistoryViewModel,
     weightUnit: WeightUnit,
     bottomContentPadding: Dp = 0.dp,
+    liveSession: ActiveSessionSnapshot? = null,
+    onJoinLiveSession: () -> Unit = {},
     onStartBlank: () -> Unit,
     onStartRoutine: (RoutineTemplate) -> Unit,
     onOpenWorkout: (WorkoutSession) -> Unit
@@ -75,6 +81,10 @@ fun DashboardScreen(
             )
         }
         item { DashboardHeader() }
+
+        if (liveSession != null) {
+            item { LiveSessionBanner(liveSession, onClick = onJoinLiveSession) }
+        }
 
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -115,6 +125,46 @@ fun DashboardScreen(
                     modifier = Modifier.clickable { onOpenWorkout(recent) }
                 )
             }
+        }
+    }
+}
+
+/** Shown when users/{uid}/activeSession/current exists but this device didn't
+ *  create it — i.e. a workout is live on another device (iPhone, most likely)
+ *  right now. Tapping it joins that same session here, live. */
+@Composable
+private fun LiveSessionBanner(session: ActiveSessionSnapshot, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(Icons.Filled.Sync, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Live workout in progress",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text(
+                    session.routineName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Text(
+                "Join",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     }
 }

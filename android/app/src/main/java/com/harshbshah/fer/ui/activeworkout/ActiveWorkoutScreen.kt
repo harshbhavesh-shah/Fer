@@ -215,6 +215,7 @@ private fun WorkoutContent(
                 totalSets = totalSetsCompleted,
                 exerciseCount = exercises.size,
                 canFinish = hasCompletedSet,
+                isRemoteSession = viewModel.isRemoteSession,
                 onDiscard = onDiscard,
                 onFinish = onFinish,
                 hazeState = hazeState
@@ -294,6 +295,7 @@ private fun WorkoutHeader(
     totalSets: Int,
     exerciseCount: Int,
     canFinish: Boolean,
+    isRemoteSession: Boolean,
     onDiscard: () -> Unit,
     onFinish: () -> Unit,
     hazeState: HazeState
@@ -306,10 +308,20 @@ private fun WorkoutHeader(
             .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onDiscard) { Text("Discard", color = MaterialTheme.colorScheme.error) }
-            Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = onFinish, enabled = canFinish) { Text("Finish", fontWeight = FontWeight.SemiBold) }
+        if (isRemoteSession) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Live from another device — finish or discard there",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onDiscard) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(onClick = onFinish, enabled = canFinish) { Text("Finish", fontWeight = FontWeight.SemiBold) }
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),

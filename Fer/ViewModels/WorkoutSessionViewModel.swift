@@ -8,6 +8,7 @@
 
 import Foundation
 import Combine
+import FirebaseFirestore
 
 @MainActor
 final class WorkoutSessionViewModel: ObservableObject, Identifiable {
@@ -27,6 +28,14 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
     private var timer: AnyCancellable?
     private var restTimer: AnyCancellable?
 
+    // MARK: - Cross-device live sync (Android, or another iOS device)
+
+    private var activeSessionListener: ListenerRegistration?
+    /// The `updatedAt` of the last snapshot *this device* pushed — a listener
+    /// firing with this same timestamp is just our own write echoing back,
+    /// not a genuine edit from another device.
+    private var lastPushedUpdatedAt: Date?
+
     init(routineName: String, exercises: [LoggedExercise], startedAt: Date = Date()) {
         self.routineName = routineName
         self.exercises = exercises
@@ -35,6 +44,7 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
         PhoneConnectivityManager.shared.attach(self)
         LiveActivityManager.shared.start(routineName: routineName, contentState: liveActivityContentState)
         persistDraft()
+        listenForCrossDeviceUpdates()
     }
 
     convenience init(from routine: RoutineTemplate) {
@@ -163,6 +173,16 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
     // MARK: - Rest timer
 
     func startRest(seconds: Int) {
+        beginRestTimer(seconds: seconds)
+        notifyChange()
+        updateLiveActivity()
+        persistDraft()
+    }
+
+    /// Just the timer mechanics, with no cross-device push — used both by
+    /// `startRest` (a local action, which does push) and by the remote-update
+    /// listener (adopting another device's rest state, which must not).
+    private func beginRestTimer(seconds: Int) {
         restTimer?.cancel()
         restTotal = seconds
         restRemaining = seconds
@@ -180,19 +200,20 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
                 self.notifyChange()
             }
         }
+    }
+
+    func skipRest() {
+        endRestTimer()
+        Haptics.light()
         notifyChange()
         updateLiveActivity()
         persistDraft()
     }
 
-    func skipRest() {
+    private func endRestTimer() {
         restTimer?.cancel()
         isResting = false
         restRemaining = 0
-        Haptics.light()
-        notifyChange()
-        updateLiveActivity()
-        persistDraft()
     }
 
     func addRestTime(_ seconds: Int) {
@@ -228,20 +249,24 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
     func finish() async {
         timer?.cancel()
         restTimer?.cancel()
+        activeSessionListener?.remove()
         let session = buildSession()
         try? await FirestoreService.shared.saveWorkout(session)
         HealthKitWriter.shared.save(session)
         PhoneConnectivityManager.shared.detach()
         LiveActivityManager.shared.end()
         WorkoutDraftStore.clear()
+        FirestoreService.shared.clearActiveSession()
     }
 
     func discard() {
         timer?.cancel()
         restTimer?.cancel()
+        activeSessionListener?.remove()
         PhoneConnectivityManager.shared.detach()
         LiveActivityManager.shared.end()
         WorkoutDraftStore.clear()
+        FirestoreService.shared.clearActiveSession()
     }
 
     // MARK: - Watch mirroring / Live Activity
@@ -304,6 +329,52 @@ final class WorkoutSessionViewModel: ObservableObject, Identifiable {
             restSecondsByExerciseId: restSecondsByExerciseId,
             weightUnitRaw: SettingsStore.shared.weightUnit.rawValue
         ))
+        pushActiveSessionToCloud()
+    }
+
+    private func pushActiveSessionToCloud() {
+        let now = Date()
+        lastPushedUpdatedAt = now
+        FirestoreService.shared.pushActiveSession(ActiveSessionSnapshot(
+            routineName: routineName,
+            exercises: exercises,
+            startedAt: startedAt,
+            isResting: isResting,
+            restEndDate: isResting ? Date().addingTimeInterval(TimeInterval(restRemaining)) : nil,
+            restSecondsByExerciseId: restSecondsByExerciseId,
+            weightUnitRaw: SettingsStore.shared.weightUnit.rawValue,
+            updatedAt: now
+        ))
+    }
+
+    /// Listens for edits made from another device (e.g. Android joining this
+    /// same live session) and adopts them locally — without re-pushing,
+    /// which would otherwise ping-pong the two devices' writes forever.
+    private func listenForCrossDeviceUpdates() {
+        activeSessionListener = FirestoreService.shared.activeSessionListener { [weak self] snapshot in
+            guard let self, let snapshot else { return }
+            // A stray doc from a different session — compare with slack since Date round-trips
+            // through Firestore's Timestamp type can lose sub-millisecond precision.
+            guard abs(snapshot.startedAt.timeIntervalSince(self.startedAt)) < 1 else { return }
+            guard let lastPushed = self.lastPushedUpdatedAt, snapshot.updatedAt > lastPushed else { return }
+            self.lastPushedUpdatedAt = snapshot.updatedAt
+            self.exercises = snapshot.exercises
+            self.restSecondsByExerciseId = snapshot.restSecondsByExerciseId
+            if snapshot.isResting, let restEndDate = snapshot.restEndDate {
+                self.beginRestTimer(seconds: max(0, Int(restEndDate.timeIntervalSinceNow)))
+            } else if self.isResting && !snapshot.isResting {
+                self.endRestTimer()
+            }
+            self.notifyChange()
+            self.updateLiveActivity()
+            WorkoutDraftStore.save(WorkoutDraft(
+                routineName: self.routineName,
+                exercises: self.exercises,
+                startedAt: self.startedAt,
+                restSecondsByExerciseId: self.restSecondsByExerciseId,
+                weightUnitRaw: SettingsStore.shared.weightUnit.rawValue
+            ))
+        }
     }
 
     /// Applies an action that originated from the Watch app.

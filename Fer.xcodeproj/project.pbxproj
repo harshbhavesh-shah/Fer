@@ -11,18 +11,11 @@
 		3A4BEFE1301A0DA100E57578 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3A4BEFE0301A0DA100E57578 /* FirebaseAuth */; };
 		3A4BEFE3301A0DA100E57578 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3A4BEFE2301A0DA100E57578 /* FirebaseCore */; };
 		3A4BEFE5301A0DA100E57578 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 3A4BEFE4301A0DA100E57578 /* FirebaseFirestore */; };
-		3AF1DE0D301C600000E57580 /* FerLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3AF1DE02301C600000E57580 /* FerLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3AD6C96FF0BCAC744C0A120D /* Fer Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 3AD01CBE301AFC1C0053E45B /* Fer Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3AF1DE0D301C600000E57580 /* FerLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3AF1DE02301C600000E57580 /* FerLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		3AF1DE0B301C600000E57580 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 3A4BEF7E301A08ED00E57578 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 3AF1DE01301C600000E57580;
-			remoteInfo = FerLiveActivity;
-		};
 		3A514D4E5B24FF82CEAD5B11 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3A4BEF7E301A08ED00E57578 /* Project object */;
@@ -30,20 +23,16 @@
 			remoteGlobalIDString = 3AD01CBD301AFC1C0053E45B;
 			remoteInfo = "Fer Watch App";
 		};
+		3AF1DE0B301C600000E57580 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3A4BEF7E301A08ED00E57578 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3AF1DE01301C600000E57580;
+			remoteInfo = FerLiveActivity;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		3AF1DE0E301C600000E57580 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				3AF1DE0D301C600000E57580 /* FerLiveActivity.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		3A5FD36F82803CF731C9B0AD /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -53,6 +42,17 @@
 				3AD6C96FF0BCAC744C0A120D /* Fer Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3AF1DE0E301C600000E57580 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3AF1DE0D301C600000E57580 /* FerLiveActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -82,12 +82,12 @@
 		3AF1DE0A301C600000E57580 /* Exceptions for "Fer" folder in "FerLiveActivity" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Models/UserProfile.swift,
 				Models/WorkoutActivityAttributes.swift,
 				Models/WorkoutSession.swift,
-				Models/UserProfile.swift,
-				Utilities/Formatters.swift,
-				Services/WorkoutDraftStore.swift,
 				Services/LiveActivitySync.swift,
+				Services/WorkoutDraftStore.swift,
+				Utilities/Formatters.swift,
 			);
 			target = 3AF1DE01301C600000E57580 /* FerLiveActivity */;
 		};
@@ -353,15 +353,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		3AF1DE0C301C600000E57580 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 3AF1DE01301C600000E57580 /* FerLiveActivity */;
-			targetProxy = 3AF1DE0B301C600000E57580 /* PBXContainerItemProxy */;
-		};
 		3AEC40C18377B0C09B736C57 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3AD01CBD301AFC1C0053E45B /* Fer Watch App */;
 			targetProxy = 3A514D4E5B24FF82CEAD5B11 /* PBXContainerItemProxy */;
+		};
+		3AF1DE0C301C600000E57580 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3AF1DE01301C600000E57580 /* FerLiveActivity */;
+			targetProxy = 3AF1DE0B301C600000E57580 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -571,14 +571,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Fer Watch App";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.Harshbshah.Fer";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Harshbshah.Fer;
 				INFOPLIST_KEY_WKWatchOnly = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Harshbshah.Fer.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = com.Harshbshah.Fer.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -605,14 +605,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Fer Watch App";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.Harshbshah.Fer";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Harshbshah.Fer;
 				INFOPLIST_KEY_WKWatchOnly = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.Harshbshah.Fer.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = com.Harshbshah.Fer.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;

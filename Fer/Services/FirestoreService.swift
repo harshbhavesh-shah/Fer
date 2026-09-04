@@ -148,6 +148,34 @@ final class FirestoreService: ObservableObject {
         try await db.collection("users").document(uid).collection("workouts").document(id).delete()
     }
 
+    // MARK: - Active session (cross-device live sync)
+
+    /// Listens for the live workout doc — present only while a workout is
+    /// actively in progress on some device (this phone, or another platform
+    /// signed into the same account), absent otherwise.
+    func activeSessionListener(onChange: @escaping (ActiveSessionSnapshot?) -> Void) -> ListenerRegistration? {
+        guard let uid = currentUid else { return nil }
+        return db.collection("users").document(uid).collection("activeSession").document("current")
+            .addSnapshotListener { snapshot, _ in
+                guard snapshot?.exists == true else {
+                    onChange(nil)
+                    return
+                }
+                onChange(try? snapshot?.data(as: ActiveSessionSnapshot.self))
+            }
+    }
+
+    func pushActiveSession(_ snapshot: ActiveSessionSnapshot) {
+        guard let uid = currentUid else { return }
+        try? db.collection("users").document(uid).collection("activeSession").document("current")
+            .setData(from: snapshot, merge: false)
+    }
+
+    func clearActiveSession() {
+        guard let uid = currentUid else { return }
+        db.collection("users").document(uid).collection("activeSession").document("current").delete()
+    }
+
     /// Fetches historical sets for a specific exercise, most recent first, for progress charts.
     func history(forExerciseId exerciseId: String, workouts: [WorkoutSession]) -> [(date: Date, bestSet: SetEntry)] {
         workouts.compactMap { workout -> (Date, SetEntry)? in

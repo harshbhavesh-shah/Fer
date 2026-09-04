@@ -139,8 +139,7 @@ private struct ActiveWorkoutMiniBar: View {
                         Circle()
                             .fill(.green)
                             .frame(width: 7, height: 7)
-                        (Text("Workout ").font(.subheadline.weight(.bold))
-                            + Text(Formatters.duration(viewModel.elapsed)).font(.subheadline).foregroundStyle(.white.opacity(0.6)))
+                        (Text("Workout ").font(.subheadline.weight(.bold)) + Text(Formatters.duration(viewModel.elapsed)).font(.subheadline).foregroundStyle(.white.opacity(0.6)))
                             .foregroundStyle(.white)
                     }
                     if let exerciseName = viewModel.currentExerciseName {
